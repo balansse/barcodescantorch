@@ -3,6 +3,7 @@ import { View, TouchableOpacity, Text, TextInput, Vibration, ViewStyle, TextStyl
 import { RNCamera } from "react-native-camera";
 import { ValueStatus } from "mendix";
 import { Style, mergeNativeStyles } from '@mendix/pluggable-widgets-tools';
+import { } from 'mendix';
 
 export interface BarcodeScanTorchStyle extends Style {
     container: ViewStyle;
@@ -126,8 +127,8 @@ export class BarcodeScanTorch extends Component<Props, State> {
                     flashMode={this.state.torchON ? RNCamera.Constants.FlashMode.torch: RNCamera.Constants.FlashMode.off}
                 />
                 <View style={this.styles.bottom}>
-                    <TouchableOpacity onPress={this.toggleTorch} style={this.state.torchON ? this.styles.switchOn : this.styles.switchOff}>
-                        <Text style={this.state.torchON ? this.styles.textOn : this.styles.textOff}>↯ Lamp {this.state.torchON ? "aan" : "uit"}</Text>
+                    <TouchableOpacity onPress={this.toggleTorch} style={this.state.torchON ? this.styles.switchOff : this.styles.switchOn}>
+                        <Text style={this.state.torchON ? this.styles.textOff : this.styles.textOn}>↯ Lamp {this.state.torchON ? "uit" : "aan"}</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={this.toggleAutoDetect} style={this.state.autoDetect ? this.styles.switchOn : this.styles.switchOff}>
                         <Text style={this.state.autoDetect ? this.styles.textOn : this.styles.textOff}>║█║ Detectie {this.state.autoDetect ? "aan" : "uit"}</Text>

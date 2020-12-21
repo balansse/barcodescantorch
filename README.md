@@ -23,3 +23,4 @@ https://github.com/IncentroBA/barcodescantorch/issues
 
 ## Development and contribution
 - Based on https://github.com/mendix/native-mobile-resources
+[Bart Onstee](https://github.com/bartonstee)

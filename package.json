@@ -27,7 +27,7 @@
     "@types/big.js": "^4.0.5",
     "@types/react": "~16.9.0",
     "@types/react-native": "~0.61.23",
-    "react-native-camera": "^3.40.0"
+    "react-native-camera": "^4.2.1"
   },
   "dependencies": {}
 }

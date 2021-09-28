@@ -9,6 +9,8 @@ export interface BarcodeScanTorchProps<Style> {
     name: string;
     style: Style[];
     barcode: EditableValue<string>;
+    multipleBarcode: boolean;
+    showScannedValue: boolean;
     onDetect?: ActionValue;
 }
 
@@ -16,5 +18,7 @@ export interface BarcodeScanTorchPreviewProps {
     class: string;
     style: string;
     barcode: string;
+    multipleBarcode: boolean;
+    showScannedValue: boolean;
     onDetect: {} | null;
 }

@@ -1,22 +1,23 @@
-import { Component, createElement } from "react";
-import { View, TouchableOpacity, Text, TextInput, Vibration, ViewStyle, TextStyle } from "react-native";
+import { Component, createElement, Fragment } from "react";
+import { View, TouchableOpacity, Text, Vibration, ViewStyle, TextStyle } from "react-native";
 import { RNCamera } from "react-native-camera";
 import { ValueStatus } from "mendix";
 import { Style, mergeNativeStyles } from '@mendix/pluggable-widgets-tools';
+import { Icon, IconStyle } from "mendix/components/native/Icon";
 import { } from 'mendix';
 
 export interface BarcodeScanTorchStyle extends Style {
     container: ViewStyle;
     preview: ViewStyle;
-    bottom: ViewStyle;
-    textBox: ViewStyle;
-    textInput: TextStyle;
-    switchOn: ViewStyle;
-    switchOff: ViewStyle;
+    buttonOverlay: ViewStyle;
+    button: ViewStyle;
+    buttonOn: ViewStyle;
+    buttonOff: ViewStyle;
     textOn: TextStyle;
     textOff: TextStyle;
-    textBarcode: TextStyle;
-
+    barcodeRectangle: ViewStyle;
+    barcodeText: TextStyle;
+    icon: IconStyle;
 };
 
 const defaultStyle: BarcodeScanTorchStyle = {
@@ -26,159 +27,184 @@ const defaultStyle: BarcodeScanTorchStyle = {
     },
     preview: {
         flex: 1,
-        alignItems: 'center',
+        width: '100%'
     },
-    bottom: {
+    buttonOverlay: {
+        flex: 1,
+        alignItems: 'center',
         justifyContent: 'flex-end',
-        backgroundColor: 'white',
-        alignItems: 'center',
     },
-    textBox: {
-        backgroundColor: 'white',
-        alignItems: 'center',
-    },
-    textInput: {
-        height: 45,
-        margin: 5,
-        width: 300,
-        borderBottomWidth: 1,
-        borderBottomColor: '#de712b',
-    },
-    switchOn: {
-        height: 45,
-        margin: 5,
+    button: {
+        height: 60,
+        width: 60,
+        margin: 10,
         borderRadius: 30,
-        backgroundColor: '#de712b',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '85%',
     },
-    switchOff: {
-        height: 45,
-        margin: 5,
-        borderRadius: 30,
+    buttonOn: {
+        backgroundColor: '#de712b',
+    },
+    buttonOff: {
         backgroundColor: 'white',
         borderWidth: 1,
         borderColor: '#de712b',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '85%',
     },
     textOn: {
         color: 'white',
         fontSize: 16,
-        margin: 50,
         fontWeight: 'bold',
     },
     textOff: {
         color: '#de712b',
         fontSize: 16,
-        margin: 50,
         fontWeight: 'bold',
     },
-    textBarcode: {
-        color: '#de712b',
-        fontSize: 16,
-        fontWeight: 'bold',
+    barcodeRectangle: {
+        borderWidth: 4,
+        borderRadius: 10,
+        position: 'absolute',
+        borderColor: '#fcba03',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(252, 186, 3, 0.1)',
+        padding: 10,
+    },
+    barcodeText: {
+        color: '#fcba03',
+        flex: 1,
+        position: 'absolute',
+        textAlign: 'center',
+        overflow: 'visible',
+    },
+    icon: {
+        size: 20,
+        color: 'white'
     }
 };
 
 import { BarcodeScanTorchProps } from "../typings/BarcodeScanTorchProps";
 
+import { GoogleVisionBarcodesDetectedEvent, Barcode } from "react-native-camera";
+
 export type Props = BarcodeScanTorchProps<BarcodeScanTorchStyle>;
 
 interface State {
     torchON?: boolean;
-    autoDetect?: boolean;
-    textboxValue?: string;
+    barcodes: Barcode[];
 }
 
 export class BarcodeScanTorch extends Component<Props, State> {
-    onBarCodeReadHandler = this.onBarCodeRead.bind(this);
-    manualBarcodeHandler = this.manualBarcode.bind(this);
+
+    camera: RNCamera | null;
+
+    onSingleBarCodeReadHandler = this.onSingleBarCodeRead.bind(this);
+    onBarCodeDetectHandler = this.onBarCodeDetect.bind(this);
+
     constructor(props: Props){
         super(props)
-        this.toggleTorch = this.toggleTorch.bind(this)
-        this.toggleAutoDetect = this.toggleAutoDetect.bind(this)
+        this.toggleTorch = this.toggleTorch.bind(this);
+        this.camera = null;
         this.state = {
                torchON: false,
-               autoDetect: true,
-               textboxValue: '',
+               barcodes: []
         }
     }
 
     private readonly styles = mergeNativeStyles(defaultStyle, this.props.style);
 
     toggleTorch(){
-        this.setState({torchON: !this.state.torchON})
+        this.setState({torchON: !this.state.torchON});
     }
 
-    toggleAutoDetect(){
-        this.setState({autoDetect: !this.state.autoDetect})
-     }
-
     render(){
+
         return (
             <View style={this.styles.container}>
                 <RNCamera
+                    ref={ref => {
+                        this.camera = ref;
+                    }}
                     style={this.styles.preview}
                     captureAudio={false}
-                    onBarCodeRead={this.onBarCodeReadHandler}
                     flashMode={this.state.torchON ? RNCamera.Constants.FlashMode.torch: RNCamera.Constants.FlashMode.off}
-                />
-                <View style={this.styles.bottom}>
-                    <TouchableOpacity onPress={this.toggleTorch} style={this.state.torchON ? this.styles.switchOff : this.styles.switchOn}>
-                        <Text style={this.state.torchON ? this.styles.textOff : this.styles.textOn}>↯ Lamp {this.state.torchON ? "uit" : "aan"}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={this.toggleAutoDetect} style={this.state.autoDetect ? this.styles.switchOn : this.styles.switchOff}>
-                        <Text style={this.state.autoDetect ? this.styles.textOn : this.styles.textOff}>║█║ Detectie {this.state.autoDetect ? "aan" : "uit"}</Text>
-                    </TouchableOpacity>
-                {this.state.autoDetect ? <View></View> : 
-                <View style={this.styles.textBox}>
-                    <Text style={this.styles.textBarcode}>Barcode: </Text>
-                    <TextInput style={this.styles.textInput} placeholder="Scan of vul handmatig" value={this.state.textboxValue} onChangeText={(text) => this.setState({textboxValue: text})}/>
-                    <TouchableOpacity onPress={this.manualBarcodeHandler} style={this.styles.switchOn}>
-                        <Text style={this.styles.textOn}>Naar machine</Text>
-                    </TouchableOpacity>
-                </View>
-                }
-                </View>
+                    onBarCodeRead={this.onSingleBarCodeReadHandler}
+                    onGoogleVisionBarcodesDetected={this.onBarCodeDetectHandler}
+                >
+                    {this.renderBarcodes()}
+                    <View style={this.styles.buttonOverlay}>
+                        <TouchableOpacity onPress={this.toggleTorch} style={[this.styles.button, this.state.torchON ? this.styles.buttonOff : this.styles.buttonOn]}>
+                            <Icon
+                                icon={{ type: "glyph", iconClass: "glyphicon-flash" }}
+                                size={20}
+                                color={this.state.torchON ? this.styles.textOff.color : this.styles.textOn.color}
+                            />
+                        </TouchableOpacity>
+                        {/* <TouchableOpacity onPress={this.takePicture.bind(this)} style={this.styles.switchOn}>
+                            <Text style={this.styles.textOn}>Take a photo</Text>
+                        </TouchableOpacity> */}
+                    </View>
+                </RNCamera>
             </View>      
         );
     }
-    // Internal button for testing
-    //<View style={this.styles.bottom}>
-    //<TouchableOpacity onPress={this.toggleTorch} style={this.styles.switch}>
-    //<Text style={{ color: 'white', fontSize: 16 }}>Zaklamp {this.state.torchON ? "uit" : "aan"}</Text>
-    //</TouchableOpacity>
-    //</View>
-    //<Image style={this.styles.Image} source={this.state.torchOn ? flashon : flashoff} />
-                        
-
-    private onBarCodeRead(event: { data: string }): void {
-        if (this.state.autoDetect) {
-            if (this.props.barcode.status !== ValueStatus.Available || event.data === this.props.barcode.value) {
-                return;
-            }
-
-            this.props.barcode.setValue(event.data);
-
-            if (this.props.onDetect && this.props.onDetect.canExecute) {
-                Vibration.vibrate(400);
-                this.props.onDetect.execute();
-            }
+                       
+    private onSingleBarCodeRead(event: { data: string }): void {
+        if (this.props.multipleBarcode) { 
+            return;
         }
-        else {
-            if (this.state.textboxValue !== event.data) {
-                Vibration.vibrate(400);
-                this.setState({textboxValue: event.data})
-                return;
-            }
+
+        //Do not trigger multiple times for the same value in single barcode mode
+        if (event.data !== this.props.barcode.value) {
+            this.onBarCodeSelect(event);
         }
     }
 
-    private manualBarcode() {
-        this.props.barcode.setValue(this.state.textboxValue);
-        this.props.onDetect?.execute();
+    private onBarCodeSelect(event: { data: string }): void {
+        if (this.props.barcode.status !== ValueStatus.Available) {
+            return;
+        }
+
+        this.props.barcode.setValue(event.data);
+
+        if (this.props.onDetect && this.props.onDetect.canExecute) {
+            Vibration.vibrate(400);
+            this.props.onDetect.execute();
+        }
     }
+
+    private onBarCodeDetect(data: GoogleVisionBarcodesDetectedEvent): void {
+        this.setState({ barcodes: data.barcodes.filter(barcode => barcode.type.toString() !== 'UNKNOWN_FORMAT') });
+    }
+
+    renderBarcodes = () => (
+        <View>
+            {this.state.barcodes.map(this.renderBarcode)}
+        </View>
+      );
+
+    renderBarcode = (barcode: Barcode) => (
+    <Fragment key={barcode.data + barcode.bounds.origin.x}>
+        <View>
+        <TouchableOpacity onPress={this.onBarCodeSelect.bind(this, barcode)} style={[
+            this.styles.barcodeRectangle,
+            {
+                ...barcode.bounds.size,
+                left: barcode.bounds.origin.x,
+                top: barcode.bounds.origin.y,
+            }]}>
+            {!this.props.showScannedValue ? <View/> :
+                <Text style={this.styles.barcodeText}>{barcode.data}</Text>
+            }
+        </TouchableOpacity>
+        </View>
+    </Fragment>
+    );
+
+    takePicture = async () => {
+        if (this.camera) {
+            const options = { quality: 0.5, base64: true };
+            const data = await this.camera.takePictureAsync(options);
+            console.log(data.uri);
+        }
+    };
 }

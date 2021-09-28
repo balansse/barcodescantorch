@@ -240,6 +240,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react_native_camera__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_native_camera__WEBPACK_IMPORTED_MODULE_2__);
 /* harmony import */ var _mendix_pluggable_widgets_tools__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @mendix/pluggable-widgets-tools */ "./node_modules/@mendix/pluggable-widgets-tools/dist/index.js");
 /* harmony import */ var _mendix_pluggable_widgets_tools__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_mendix_pluggable_widgets_tools__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var mendix_components_native_Icon__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! mendix/components/native/Icon */ "mendix/components/native/Icon");
+/* harmony import */ var mendix_components_native_Icon__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(mendix_components_native_Icon__WEBPACK_IMPORTED_MODULE_4__);
+
 
 
 
@@ -252,127 +255,139 @@ const defaultStyle = {
     },
     preview: {
         flex: 1,
-        alignItems: 'center',
+        width: '100%'
     },
-    bottom: {
+    buttonOverlay: {
+        flex: 1,
+        alignItems: 'center',
         justifyContent: 'flex-end',
-        backgroundColor: 'white',
-        alignItems: 'center',
     },
-    textBox: {
-        backgroundColor: 'white',
-        alignItems: 'center',
-    },
-    textInput: {
-        height: 45,
-        margin: 5,
-        width: 300,
-        borderBottomWidth: 1,
-        borderBottomColor: '#de712b',
-    },
-    switchOn: {
-        height: 45,
-        margin: 5,
+    button: {
+        height: 60,
+        width: 60,
+        margin: 10,
         borderRadius: 30,
-        backgroundColor: '#de712b',
         alignItems: 'center',
         justifyContent: 'center',
-        width: '85%',
     },
-    switchOff: {
-        height: 45,
-        margin: 5,
-        borderRadius: 30,
+    buttonOn: {
+        backgroundColor: '#de712b',
+    },
+    buttonOff: {
         backgroundColor: 'white',
         borderWidth: 1,
         borderColor: '#de712b',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '85%',
     },
     textOn: {
         color: 'white',
         fontSize: 16,
-        margin: 50,
         fontWeight: 'bold',
     },
     textOff: {
         color: '#de712b',
         fontSize: 16,
-        margin: 50,
         fontWeight: 'bold',
     },
-    textBarcode: {
-        color: '#de712b',
-        fontSize: 16,
-        fontWeight: 'bold',
+    barcodeRectangle: {
+        borderWidth: 4,
+        borderRadius: 10,
+        position: 'absolute',
+        borderColor: '#fcba03',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(252, 186, 3, 0.1)',
+        padding: 10,
+    },
+    barcodeText: {
+        color: '#fcba03',
+        flex: 1,
+        position: 'absolute',
+        textAlign: 'center',
+        overflow: 'visible',
+    },
+    icon: {
+        size: 20,
+        color: 'white'
     }
 };
 class BarcodeScanTorch extends react__WEBPACK_IMPORTED_MODULE_0__["Component"] {
     constructor(props) {
         super(props);
-        this.onBarCodeReadHandler = this.onBarCodeRead.bind(this);
-        this.manualBarcodeHandler = this.manualBarcode.bind(this);
+        this.onSingleBarCodeReadHandler = this.onSingleBarCodeRead.bind(this);
+        this.onBarCodeDetectHandler = this.onBarCodeDetect.bind(this);
         this.styles = Object(_mendix_pluggable_widgets_tools__WEBPACK_IMPORTED_MODULE_3__["mergeNativeStyles"])(defaultStyle, this.props.style);
+        this.renderBarcodes = () => (Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], null, this.state.barcodes.map(this.renderBarcode)));
+        this.renderBarcode = (barcode) => (Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react__WEBPACK_IMPORTED_MODULE_0__["Fragment"], { key: barcode.data + barcode.bounds.origin.x },
+            Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], null,
+                Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["TouchableOpacity"], { onPress: this.onBarCodeSelect.bind(this, barcode), style: [
+                        this.styles.barcodeRectangle,
+                        {
+                            ...barcode.bounds.size,
+                            left: barcode.bounds.origin.x,
+                            top: barcode.bounds.origin.y,
+                        }
+                    ] }, !this.props.showScannedValue ? Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], null) :
+                    Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["Text"], { style: this.styles.barcodeText }, barcode.data)))));
+        this.takePicture = async () => {
+            if (this.camera) {
+                const options = { quality: 0.5, base64: true };
+                const data = await this.camera.takePictureAsync(options);
+                console.log(data.uri);
+            }
+        };
         this.toggleTorch = this.toggleTorch.bind(this);
-        this.toggleAutoDetect = this.toggleAutoDetect.bind(this);
+        this.camera = null;
         this.state = {
             torchON: false,
-            autoDetect: true,
-            textboxValue: '',
+            barcodes: []
         };
     }
     toggleTorch() {
         this.setState({ torchON: !this.state.torchON });
     }
-    toggleAutoDetect() {
-        this.setState({ autoDetect: !this.state.autoDetect });
-    }
     render() {
         return (Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], { style: this.styles.container },
-            Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native_camera__WEBPACK_IMPORTED_MODULE_2__["RNCamera"], { style: this.styles.preview, captureAudio: false, onBarCodeRead: this.onBarCodeReadHandler, flashMode: this.state.torchON ? react_native_camera__WEBPACK_IMPORTED_MODULE_2__["RNCamera"].Constants.FlashMode.torch : react_native_camera__WEBPACK_IMPORTED_MODULE_2__["RNCamera"].Constants.FlashMode.off }),
-            Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], { style: this.styles.bottom },
-                Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["TouchableOpacity"], { onPress: this.toggleTorch, style: this.state.torchON ? this.styles.switchOff : this.styles.switchOn },
-                    Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["Text"], { style: this.state.torchON ? this.styles.textOff : this.styles.textOn },
-                        "\u21AF Lamp ",
-                        this.state.torchON ? "uit" : "aan")),
-                Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["TouchableOpacity"], { onPress: this.toggleAutoDetect, style: this.state.autoDetect ? this.styles.switchOn : this.styles.switchOff },
-                    Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["Text"], { style: this.state.autoDetect ? this.styles.textOn : this.styles.textOff },
-                        "\u2551\u2588\u2551 Detectie ",
-                        this.state.autoDetect ? "aan" : "uit")),
-                this.state.autoDetect ? Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], null) :
-                    Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], { style: this.styles.textBox },
-                        Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["Text"], { style: this.styles.textBarcode }, "Barcode: "),
-                        Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["TextInput"], { style: this.styles.textInput, placeholder: "Scan of vul handmatig", value: this.state.textboxValue, onChangeText: (text) => this.setState({ textboxValue: text }) }),
-                        Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["TouchableOpacity"], { onPress: this.manualBarcodeHandler, style: this.styles.switchOn },
-                            Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["Text"], { style: this.styles.textOn }, "Naar machine"))))));
+            Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native_camera__WEBPACK_IMPORTED_MODULE_2__["RNCamera"], { ref: ref => {
+                    this.camera = ref;
+                }, style: this.styles.preview, captureAudio: false, flashMode: this.state.torchON ? react_native_camera__WEBPACK_IMPORTED_MODULE_2__["RNCamera"].Constants.FlashMode.torch : react_native_camera__WEBPACK_IMPORTED_MODULE_2__["RNCamera"].Constants.FlashMode.off, onBarCodeRead: this.onSingleBarCodeReadHandler, onGoogleVisionBarcodesDetected: this.onBarCodeDetectHandler },
+                this.renderBarcodes(),
+                Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["View"], { style: this.styles.buttonOverlay },
+                    Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(react_native__WEBPACK_IMPORTED_MODULE_1__["TouchableOpacity"], { onPress: this.toggleTorch, style: [this.styles.button, this.state.torchON ? this.styles.buttonOff : this.styles.buttonOn] },
+                        Object(react__WEBPACK_IMPORTED_MODULE_0__["createElement"])(mendix_components_native_Icon__WEBPACK_IMPORTED_MODULE_4__["Icon"], { icon: { type: "glyph", iconClass: "glyphicon-flash" }, size: 20, color: this.state.torchON ? this.styles.textOff.color : this.styles.textOn.color }))))));
     }
-    onBarCodeRead(event) {
-        if (this.state.autoDetect) {
-            if (this.props.barcode.status !== "available" || event.data === this.props.barcode.value) {
-                return;
-            }
-            this.props.barcode.setValue(event.data);
-            if (this.props.onDetect && this.props.onDetect.canExecute) {
-                react_native__WEBPACK_IMPORTED_MODULE_1__["Vibration"].vibrate(400);
-                this.props.onDetect.execute();
-            }
+    onSingleBarCodeRead(event) {
+        if (this.props.multipleBarcode) {
+            return;
         }
-        else {
-            if (this.state.textboxValue !== event.data) {
-                react_native__WEBPACK_IMPORTED_MODULE_1__["Vibration"].vibrate(400);
-                this.setState({ textboxValue: event.data });
-                return;
-            }
+        if (event.data !== this.props.barcode.value) {
+            this.onBarCodeSelect(event);
         }
     }
-    manualBarcode() {
-        var _a;
-        this.props.barcode.setValue(this.state.textboxValue);
-        (_a = this.props.onDetect) === null || _a === void 0 ? void 0 : _a.execute();
+    onBarCodeSelect(event) {
+        if (this.props.barcode.status !== "available") {
+            return;
+        }
+        this.props.barcode.setValue(event.data);
+        if (this.props.onDetect && this.props.onDetect.canExecute) {
+            react_native__WEBPACK_IMPORTED_MODULE_1__["Vibration"].vibrate(400);
+            this.props.onDetect.execute();
+        }
+    }
+    onBarCodeDetect(data) {
+        this.setState({ barcodes: data.barcodes.filter(barcode => barcode.type.toString() !== 'UNKNOWN_FORMAT') });
     }
 }
 
+
+/***/ }),
+
+/***/ "mendix/components/native/Icon":
+/*!************************************************!*\
+  !*** external "mendix/components/native/Icon" ***!
+  \************************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = require("mendix/components/native/Icon");
 
 /***/ }),
 

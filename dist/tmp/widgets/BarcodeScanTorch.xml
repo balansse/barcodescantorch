@@ -14,6 +14,16 @@
                     </attributeTypes>
                 </property>
             </propertyGroup>
+            <propertyGroup caption="Operation">
+                <property key="multipleBarcode" type="boolean" defaultValue="false">
+                    <caption>Multiple barcode mode</caption>
+                    <description>Display a rectangle on each detected barcode, tap to select</description>
+                </property>
+                <property key="showScannedValue" type="boolean" defaultValue="false">
+                    <caption>Show scanned value</caption>
+                    <description/>
+                </property>
+            </propertyGroup>
             <propertyGroup caption="Events">
                 <property key="onDetect" type="action" required="false">
                     <caption>On detect</caption>
